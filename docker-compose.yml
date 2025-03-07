@@ -1,0 +1,32 @@
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=monitoring_tool
+      - DB_USERNAME=root
+      - DB_PASSWORD=secret
+    depends_on:
+      - db
+    volumes:
+      - .:/var/www
+      - /var/www/node_modules
+      - /var/www/vendor
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_DATABASE=monitoring_tool
+      - MYSQL_ROOT_PASSWORD=secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+
+volumes:
+  dbdata: 

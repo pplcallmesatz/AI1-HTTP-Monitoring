@@ -1,4 +1,4 @@
-FROM php:8.1-fpm
+FROM php:8.2-fpm
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     nodejs \
     npm \
-    nginx
+    nginx \
+    netcat-traditional
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -26,13 +27,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy project files
+# Copy composer files first to leverage Docker cache
+COPY composer.json composer.lock ./
+
+# Install composer dependencies
+RUN composer install --no-interaction --no-dev --optimize-autoloader
+
+# Copy the rest of the application code
 COPY . .
 
-# Install dependencies
-RUN composer install --no-interaction --no-dev --optimize-autoloader
-RUN npm install
-RUN npm run build
+# Install and build frontend assets
+RUN npm install && npm run build
 
 # Configure Nginx
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
